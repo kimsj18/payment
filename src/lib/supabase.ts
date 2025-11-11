@@ -1,32 +1,17 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 
-let _supabase: SupabaseClient | null = null;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// Lazy initialization으로 Supabase 클라이언트 생성
-export function getSupabase(): SupabaseClient {
-  if (!_supabase) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    
-    if (!supabaseUrl) {
-      throw new Error('NEXT_PUBLIC_SUPABASE_URL is required');
-    }
-    if (!supabaseAnonKey) {
-      throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required');
-    }
-    
-    _supabase = createClient(supabaseUrl, supabaseAnonKey);
-  }
-  
-  return _supabase;
+if (!supabaseUrl) {
+  throw new Error('NEXT_PUBLIC_SUPABASE_URL is required. Please set it in your .env.local file.');
 }
 
-// 호환성을 위한 getter
-export const supabase = new Proxy({} as SupabaseClient, {
-  get(target, prop) {
-    return getSupabase()[prop as keyof SupabaseClient];
-  }
-});
+if (!supabaseAnonKey) {
+  throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required. Please set it in your .env.local file.');
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export interface Magazine {
   id?: string;
