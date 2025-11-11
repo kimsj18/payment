@@ -1,9 +1,32 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+let _supabase: SupabaseClient | null = null;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Lazy initialization으로 Supabase 클라이언트 생성
+export function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl) {
+      throw new Error('NEXT_PUBLIC_SUPABASE_URL is required');
+    }
+    if (!supabaseAnonKey) {
+      throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required');
+    }
+    
+    _supabase = createClient(supabaseUrl, supabaseAnonKey);
+  }
+  
+  return _supabase;
+}
+
+// 호환성을 위한 getter
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(target, prop) {
+    return getSupabase()[prop as keyof SupabaseClient];
+  }
+});
 
 export interface Magazine {
   id?: string;
