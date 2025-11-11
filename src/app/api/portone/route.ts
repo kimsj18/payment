@@ -3,14 +3,23 @@ import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import axios from 'axios';
 
-// Supabase 클라이언트 생성
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 // 포트원 API 설정
-const PORTONE_API_SECRET = process.env.PORTONE_API_SECRET!;
 const PORTONE_API_BASE = 'https://api.portone.io';
+
+// Supabase 클라이언트 생성 함수
+function createSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl) {
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL is required');
+  }
+  if (!supabaseServiceKey) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY is required');
+  }
+  
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
 
 // 타입 정의
 interface WebhookPayload {
@@ -39,6 +48,15 @@ interface PaymentScheduleItem {
 
 export async function POST(request: NextRequest) {
   try {
+    // 환경 변수 검증
+    const PORTONE_API_SECRET = process.env.PORTONE_API_SECRET;
+    if (!PORTONE_API_SECRET) {
+      throw new Error('PORTONE_API_SECRET is required');
+    }
+
+    // Supabase 클라이언트 생성
+    const supabase = createSupabaseClient();
+
     // 1. 웹훅 페이로드 파싱
     const payload: WebhookPayload = await request.json();
     console.log('포트원 웹훅 수신:', payload);
